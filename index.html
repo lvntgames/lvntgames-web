@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en" data-ui="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lvntgames — puzzle games</title>
+<meta name="description" content="lvntgames makes small puzzle games and learning apps. Sudoku is coming soon to Google Play.">
+<link rel="icon" type="image/png" sizes="48x48" href="img/favicon-48.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta property="og:title" content="lvntgames">
+<meta property="og:description" content="Puzzle games and learning apps.">
+<meta property="og:image" content="https://lvntgames.fun/img/og-lvntgames.jpg">
+<meta property="og:url" content="https://lvntgames.fun/">
+<meta name="theme-color" content="#13113b">
+<!--
+  =============================================================================
+  index.html — lvntgames ana sayfası
+  -----------------------------------------------------------------------------
+  Dışarıdan hiçbir şey yüklemiyor (yazı tipi, takip kodu, reklam yok). Bu hem
+  sayfayı hızlı yapar hem de gizlilik açısından temiz tutar.
+  Dil: Sayfada İngilizce ve Türkçe metin birlikte duruyor. Sağ üstteki düğme
+  hangisinin görüneceğini seçer; telefonu Türkçe olanlar Türkçe görür.
+  =============================================================================
+-->
+<style>
+  :root {
+    --night: #13113b;       /* logodaki gece laciverti (arka plan) */
+    --glow: #332d70;        /* ortadaki mor parıltı */
+    --line: rgba(255, 255, 255, .10); /* boş karoların çerçevesi */
+    --coral: #ff7a5c;       /* turuncu karoların başı */
+    --amber: #ffb04e;       /* turuncu karoların sonu */
+    --teal: #3ee6c8;        /* tek mavi-yeşil karo */
+    --sky: #2a9df4;
+    --text: #f2f0ff;
+    --muted: #b3b0dd;
+    --radius-tile: 22%;
+    --font: "Poppins", ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { background: var(--night); }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    /* Kapak görselindeki gibi: hafif mor parıltı + arkada soluk karo ızgarası */
+    background:
+      radial-gradient(ellipse 70% 55% at 30% 28%, rgba(51, 45, 112, .95), transparent 70%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect x='5' y='5' width='34' height='34' rx='8' fill='none' stroke='white' stroke-opacity='.06' stroke-width='1.5'/%3E%3C/svg%3E"),
+      var(--night);
+  }
+
+  /* --- Dil seçimi: sadece seçili dildeki metin görünür ---------------------- */
+  html[data-ui="en"] [lang="tr"],
+  html[data-ui="tr"] [lang="en"] { display: none; }
+
+  a { color: var(--amber); text-underline-offset: .2em; }
+  a:hover { color: #ffc879; }
+  :focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; border-radius: 6px; }
+
+  .wrap { width: min(100% - 2.5rem, 46rem); margin-inline: auto; }
+
+  /* --- Üst çubuk ------------------------------------------------------------- */
+  .top {
+    display: flex; justify-content: flex-end;
+    padding-block: 1.25rem;
+  }
+  .lang-btn {
+    font: inherit; font-size: .9375rem;
+    color: var(--muted);
+    background: transparent;
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+    padding: .35rem 1rem;
+    cursor: pointer;
+  }
+  .lang-btn:hover { color: var(--text); border-color: rgba(255, 255, 255, .3); }
+
+  /* --- Giriş: logo karoları + isim ------------------------------------------ */
+  .hero {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: clamp(1.25rem, 5vw, 2.75rem);
+    padding-block: clamp(2.5rem, 9vw, 6rem) clamp(3rem, 8vw, 5rem);
+  }
+
+  /* 3x3 karo: geliştirici simgesinin aynısı, CSS ile çizildi */
+  .mark {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14%;
+    width: clamp(6.5rem, 22vw, 10rem);
+    aspect-ratio: 1;
+  }
+  .mark i {
+    border-radius: var(--radius-tile);
+    border: 2px solid rgba(255, 255, 255, .14);
+    background: rgba(255, 255, 255, .04);
+  }
+  .mark i.on {
+    border-color: transparent;
+    background: linear-gradient(135deg, var(--coral), var(--amber));
+    box-shadow: 0 0 18px rgba(255, 140, 80, .45);
+  }
+  .mark i.on.cool {
+    background: linear-gradient(135deg, var(--teal), var(--sky));
+    box-shadow: 0 0 18px rgba(62, 200, 230, .45);
+  }
+
+  /* Tek hareket: sayfa açılınca karolar bir sudoku çözülüyormuş gibi
+     sırayla yanar. Hareket istemeyen kullanıcıda hiç oynamaz. */
+  @media (prefers-reduced-motion: no-preference) {
+    .mark i.on {
+      animation: light .5s cubic-bezier(.2, .8, .2, 1) both;
+      animation-delay: calc(var(--n) * 110ms + 200ms);
+    }
+    @keyframes light {
+      from { opacity: 0; transform: scale(.6); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+  }
+
+  .name {
+    margin: 0;
+    font-size: clamp(2.75rem, 10vw, 5rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -.02em;
+  }
+  .name span {
+    background: linear-gradient(100deg, var(--coral), var(--amber));
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+  }
+  .tagline {
+    margin: .9rem 0 0;
+    max-width: 30ch;
+    color: var(--muted);
+    font-size: clamp(1.0625rem, 2.4vw, 1.25rem);
+    line-height: 1.45;
+  }
+
+  /* --- Oyunlar --------------------------------------------------------------- */
+  h2 {
+    margin: 0 0 1.25rem;
+    font-size: 1.375rem;
+    font-weight: 600;
+  }
+  .game {
+    display: grid;
+    grid-template-columns: 5.5rem 1fr;
+    gap: 1.5rem;
+    align-items: start;
+    padding: 1.75rem 0;
+    border-top: 1.5px solid var(--line);
+  }
+  .game img {
+    width: 5.5rem; height: 5.5rem;
+    border-radius: 24%;
+    display: block;
+  }
+  .game h3 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+  .game p { margin: .4rem 0 0; color: var(--muted); max-width: 60ch; }
+  .status {
+    display: inline-block;
+    margin-top: .9rem;
+    font-size: .9375rem;
+    color: var(--teal);
+  }
+
+  /* --- İletişim ve alt bilgi ------------------------------------------------ */
+  .contact { padding-block: 2.5rem 1rem; border-top: 1.5px solid var(--line); }
+  .contact p { margin: 0; color: var(--muted); }
+
+  footer {
+    padding-block: 2rem 3rem;
+    color: var(--muted);
+    font-size: .9375rem;
+    display: flex; flex-wrap: wrap; gap: .5rem 1.5rem;
+  }
+
+  @media (max-width: 30rem) {
+    .hero { grid-template-columns: 1fr; }
+    .game { grid-template-columns: 4.25rem 1fr; gap: 1rem; }
+    .game img { width: 4.25rem; height: 4.25rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <button class="lang-btn" type="button" id="lang-btn" aria-label="Dili değiştir / Change language">
+      <span lang="en">Türkçe</span><span lang="tr">English</span>
+    </button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <!-- Karoların sırası logodakiyle aynı: soldan sağa, yukarıdan aşağıya.
+           "on" = dolu karo, "cool" = mavi-yeşil olan, --n = yanma sırası -->
+      <div class="mark" aria-hidden="true">
+        <i class="on" style="--n:0"></i><i></i><i class="on cool" style="--n:6"></i>
+        <i class="on" style="--n:1"></i><i></i><i></i>
+        <i class="on" style="--n:2"></i><i class="on" style="--n:3"></i><i class="on" style="--n:4"></i>
+      </div>
+      <div>
+        <h1 class="name">lvnt<span>games</span></h1>
+        <p class="tagline" lang="en">Small puzzle games and learning apps, made in Türkiye.</p>
+        <p class="tagline" lang="tr">Küçük bulmaca oyunları ve öğrenme uygulamaları. Türkiye'de geliştiriliyor.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="games-title">
+      <h2 id="games-title"><span lang="en">Games</span><span lang="tr">Oyunlar</span></h2>
+
+      <article class="game">
+        <img src="img/sudoku-icon.png" alt="Sudoku icon">
+        <div>
+          <h3>Sudoku</h3>
+          <p lang="en">Classic Sudoku on 6×6 and 9×9 boards. Follow the journey map through Easy, Medium and Hard paths of 100 levels each, earn stars, and take hints when you are stuck. Available in 7 languages.</p>
+          <p lang="tr">6×6 ve 9×9 tahtada klasik Sudoku. Yolculuk haritasında her biri 100 seviyelik Kolay, Orta ve Zor yolları ilerle, yıldız topla, takıldığında ipucu al. 7 dilde oynanır.</p>
+          <span class="status" lang="en">Coming soon to Google Play</span>
+          <span class="status" lang="tr">Yakında Google Play'de</span>
+        </div>
+      </article>
+    </section>
+
+    <section class="contact" aria-labelledby="contact-title">
+      <h2 id="contact-title"><span lang="en">Contact</span><span lang="tr">İletişim</span></h2>
+      <p lang="en">Questions, bug reports or ideas: <a href="mailto:EPOSTA_ADRESI">EPOSTA_ADRESI</a></p>
+      <p lang="tr">Soru, hata bildirimi ya da fikirleriniz için: <a href="mailto:EPOSTA_ADRESI">EPOSTA_ADRESI</a></p>
+    </section>
+  </main>
+
+  <footer>
+    <span>© 2026 lvntgames</span>
+    <a href="privacy.html#en" lang="en">Privacy policy</a>
+    <a href="privacy.html#tr" lang="tr">Gizlilik politikası</a>
+  </footer>
+
+</div>
+
+<script>
+  // Dil seçimi: önce daha önce seçileni, yoksa telefonun/tarayıcının dilini kullan.
+  // localStorage bazı tarayıcılarda kapalı olabilir; o yüzden try/catch içinde.
+  (function () {
+    var root = document.documentElement;
+    function set(lang) {
+      root.setAttribute('data-ui', lang);
+      root.setAttribute('lang', lang);
+    }
+    var saved = null;
+    try { saved = localStorage.getItem('lvnt-lang'); } catch (e) {}
+    var browserTr = (navigator.language || '').toLowerCase().indexOf('tr') === 0;
+    set(saved || (browserTr ? 'tr' : 'en'));
+
+    document.getElementById('lang-btn').addEventListener('click', function () {
+      var next = root.getAttribute('data-ui') === 'tr' ? 'en' : 'tr';
+      set(next);
+      try { localStorage.setItem('lvnt-lang', next); } catch (e) {}
+    });
+  })();
+</script>
+</body>
+</html>
